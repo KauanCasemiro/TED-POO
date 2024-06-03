@@ -1,0 +1,32 @@
+package com.example.authentication;
+
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/auth")
+public class AutenticacaoController {
+
+    private final EstrategiaAutenticacao estrategiaAutenticacao = new EstrategiaAutenticacaoBasica();
+
+    @PostMapping("/register")
+    public Map<String, String> register(@RequestParam String username, @RequestParam String password) {
+        if (estrategiaAutenticacao.registrar(username, password)) {
+            return Map.of("message", "Usuário registrado com sucesso.");
+        } else {
+            return Map.of("message", "Usuário já existe.");
+        }
+    }
+
+    @PostMapping("/login")
+    public Map<String, String> login(@RequestParam String username, @RequestParam String password) {
+        ManipuladorAutenticacao manipuladorAutenticacao = new ManipuladorAutenticacao(estrategiaAutenticacao, new ExecutorMetodoSeguroImpl(new ServicoSeguro()));
+        if (estrategiaAutenticacao.autenticar(username, password)) {
+            manipuladorAutenticacao.executarMetodoSeguro(username, password, new ServicoSeguro());
+            return Map.of("message", "Login bem-sucedido.");
+        } else {
+            return Map.of("message", "Falha na autenticação. Acesso negado.");
+        }
+    }
+}
